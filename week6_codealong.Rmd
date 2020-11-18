@@ -1,0 +1,126 @@
+---
+title: "week6_codealong"
+author: "Cali Pfleger"
+date: "11/17/2020"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(tidyverse)
+library(palmerpenguins)
+library(ggpubr)
+library(broom)
+```
+
+
+## Part 2: A rank-based test example (Mann Whitney U)
+
+# make some mock unpaired data and investigate the difference in ranks (often called a medians comparison) by Mann-Whitney U using the wilcox.test() function  
+
+```{r}
+set.seed(1414)
+gp_1 <- sample.int(20, size = 15, replace = TRUE)
+
+set.seed(1424)
+gp_2 <- sample.int(30, size = 15, replace = TRUE)
+
+#histograms
+hist(gp_1)
+hist(gp_2)
+
+##we’ll perform Mann-Whitney U to answer “Is there a significant difference in ranks (medians) between gp_1 and gp_2?” using the wilcox.test() function.
+my_mwu <- wilcox.test(gp_1, gp_2)
+
+## call to get output
+my_mwu
+
+```
+
+## Part 3: Simple linear regression
+#We’ll exploring the relationship between two continuous variables, using the penguins dataset from the palmerpenguins package in R.
+
+# A. exploratory scatterplot of penguing flipper length versus body mass
+```{r}
+ggplot(data = penguins, aes(x = flipper_length_mm, y = body_mass_g)) +
+  geom_point()
+
+```
+
+
+## B. model it using lm().
+
+```{r}
+# Linear model, stored as penguin_lm:
+penguin_lm <- lm(body_mass_g ~ flipper_length_mm, data = penguins)
+
+# Return the complete overview:
+summary(penguin_lm)
+```
+
+## C. Access model outputs
+### We can access the coefficients for the model using:
+##The slope is 49.69 (g / mm)
+##The y-intercept is -5780.83 (g)
+##The full equation is mass = 49.69*(flipper length) + (-5780.83)
+##But trying to get all of the statistical information from the summary() function would be kind of a mess.
+
+## We can use the broom::tidy() function to get the model outputs in nice data frame format:
+
+```{r}
+penguin_lm_tidy <- broom::tidy(penguin_lm)
+
+# Get the intercept: 
+penguin_int <- penguin_lm_tidy$estimate[1]
+penguin_int
+
+
+# Metrics at a glance: 
+penguin_lm_out <- broom::glance(penguin_lm)
+penguin_lm_out
+
+```
+
+
+
+## D. Explore model assumptions
+## Recall that we have assumptions for linear regression we need to explore, some related to the residuals.
+
+### -Linearly related variables (CHECK - already looked & thought hard)
+### - Normally distributed residuals
+### - Homoscedasticity (constant residuals variance)
+### - iid residuals (no serial correlation) - more often a concern in time series data
+
+```{r}
+plot(penguin_lm)
+
+```
+
+
+## E. Visualize the model
+### Now that we’ve explore the assumptions and have decided that linear regression is a valid tool to describe the relationship between flipper length and body mass, let’s look at the model.
+
+### - Use geom_smooth(method = "lm") to add a linear model to an existing scatterplot
+
+### - Use stat_cor() and/or stat_regline_equation() to add equation information directly to the plot panel, at an x- and y-position that you specify (and yes, you can mess with the digits & appearance here)
+
+
+```{r}
+ggplot(data = penguins, aes(x = flipper_length_mm, y = body_mass_g)) +
+  geom_point(size = 2) +
+  geom_smooth(method = "lm",
+              color = "red",
+              size = 0.5,
+              fill = "gray10",
+              alpha = 0.5) +
+  theme_light() +
+  ggpubr::stat_regline_equation(label.x = 180, label.y = 5700)
+```
+## F. Find Pearson’s r for correlation:
+
+
+```{r}
+penguins_cor <- cor.test(penguins$flipper_length_mm, penguins$body_mass_g)
+
+```
+
